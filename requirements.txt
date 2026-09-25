@@ -1,0 +1,5 @@
+SpeechRecognition==3.14.3
+deep-translator==1.11.4
+python-osc==1.9.3
+PyAudio==0.2.14
+pynput==1.7.7
