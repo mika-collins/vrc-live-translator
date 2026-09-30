@@ -124,7 +124,13 @@ class LiveTranslatorApp:
 
     def _section(self, parent: ctk.CTkBaseClass, title: str) -> ctk.CTkFrame:
         """Build a titled panel matching the app's dark card style."""
-        outer = ctk.CTkFrame(parent, fg_color=theme.BG_PANEL, corner_radius=10, border_width=1, border_color=theme.BORDER)
+        outer = ctk.CTkFrame(
+            parent,
+            fg_color=theme.BG_PANEL,
+            corner_radius=theme.RADIUS_PANEL,
+            border_width=theme.BORDER_WIDTH,
+            border_color=theme.CONTROL_BORDER,
+        )
         ctk.CTkLabel(outer, text=title, font=theme.section_font(), text_color=theme.TEXT_PRIMARY).grid(
             row=0, column=0, columnspan=4, padx=16, pady=(14, 4), sticky="w"
         )
@@ -135,7 +141,7 @@ class LiveTranslatorApp:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(4, weight=1)
 
-        header = ctk.CTkFrame(self.root, fg_color=theme.BG_PANEL, corner_radius=0, height=68)
+        header = ctk.CTkFrame(self.root, fg_color=theme.BG_PRIMARY, corner_radius=0, height=68)
         header.grid(row=0, column=0, sticky="ew")
         header.grid_propagate(False)
         header.columnconfigure(1, weight=1)
@@ -158,9 +164,16 @@ class LiveTranslatorApp:
             settings,
             variable=self.microphone_var,
             values=self.microphones,
-            fg_color=theme.BG_CONTROL,
-            button_color=theme.ACCENT,
-            button_hover_color=theme.ACCENT_HOVER,
+            fg_color=theme.CONTROL_BG,
+            button_color=theme.CONTROL_BG,
+            button_hover_color=theme.CONTROL_BG_HOVER,
+            text_color=theme.ACCENT,
+            dropdown_fg_color=theme.CONTROL_BG,
+            dropdown_hover_color=theme.CONTROL_BG_HOVER,
+            dropdown_text_color=theme.ACCENT,
+            corner_radius=theme.RADIUS_CONTROL,
+            height=36,
+            font=theme.control_font(),
         )
         self.microphone_menu.grid(row=1, column=1, columnspan=3, padx=(0, 16), pady=8, sticky="ew")
 
@@ -174,9 +187,16 @@ class LiveTranslatorApp:
             variable=self.source_language_display_var,
             values=language_labels,
             command=self._on_source_language_change,
-            fg_color=theme.BG_CONTROL,
-            button_color=theme.ACCENT,
-            button_hover_color=theme.ACCENT_HOVER,
+            fg_color=theme.CONTROL_BG,
+            button_color=theme.CONTROL_BG,
+            button_hover_color=theme.CONTROL_BG_HOVER,
+            text_color=theme.ACCENT,
+            dropdown_fg_color=theme.CONTROL_BG,
+            dropdown_hover_color=theme.CONTROL_BG_HOVER,
+            dropdown_text_color=theme.ACCENT,
+            corner_radius=theme.RADIUS_CONTROL,
+            height=36,
+            font=theme.control_font(),
         )
         self.source_menu.grid(row=2, column=1, padx=(0, 8), pady=8, sticky="ew")
 
@@ -188,9 +208,16 @@ class LiveTranslatorApp:
             variable=self.target_language_display_var,
             values=language_labels,
             command=self._on_target_language_change,
-            fg_color=theme.BG_CONTROL,
-            button_color=theme.ACCENT,
-            button_hover_color=theme.ACCENT_HOVER,
+            fg_color=theme.CONTROL_BG,
+            button_color=theme.CONTROL_BG,
+            button_hover_color=theme.CONTROL_BG_HOVER,
+            text_color=theme.ACCENT,
+            dropdown_fg_color=theme.CONTROL_BG,
+            dropdown_hover_color=theme.CONTROL_BG_HOVER,
+            dropdown_text_color=theme.ACCENT,
+            corner_radius=theme.RADIUS_CONTROL,
+            height=36,
+            font=theme.control_font(),
         )
         self.target_menu.grid(row=2, column=3, padx=(0, 16), pady=8, sticky="ew")
 
@@ -202,6 +229,9 @@ class LiveTranslatorApp:
             font=theme.body_font(),
             fg_color=theme.ACCENT,
             hover_color=theme.ACCENT_HOVER,
+            border_width=theme.BORDER_WIDTH,
+            border_color=theme.CONTROL_BORDER,
+            text_color=theme.TEXT_PRIMARY,
         ).grid(row=3, column=0, columnspan=4, padx=16, pady=(4, 14), sticky="w")
 
         hotkeys = self._section(self.root, "Hotkeys & VR control")
@@ -218,9 +248,13 @@ class LiveTranslatorApp:
             hotkeys,
             text="Change...",
             command=self._start_hotkey_capture,
-            fg_color=theme.BG_CONTROL,
-            hover_color=theme.BORDER,
-            text_color=theme.TEXT_PRIMARY,
+            fg_color=theme.CONTROL_BG,
+            hover_color=theme.CONTROL_BG_HOVER,
+            text_color=theme.ACCENT,
+            border_width=theme.BORDER_WIDTH,
+            border_color=theme.CONTROL_BORDER,
+            corner_radius=theme.RADIUS_CONTROL,
+            font=theme.control_font(),
             width=100,
         )
         self.change_hotkey_button.grid(row=1, column=2, padx=(8, 16), pady=8, sticky="e")
@@ -231,7 +265,13 @@ class LiveTranslatorApp:
             row=2, column=0, padx=(16, 8), pady=(0, 14), sticky="w"
         )
         ctk.CTkEntry(
-            hotkeys, textvariable=self.avatar_parameter_var, fg_color=theme.BG_CONTROL, border_color=theme.BORDER
+            hotkeys,
+            textvariable=self.avatar_parameter_var,
+            fg_color=theme.CONTROL_BG,
+            border_width=theme.BORDER_WIDTH,
+            border_color=theme.CONTROL_BORDER,
+            text_color=theme.TEXT_PRIMARY,
+            corner_radius=theme.RADIUS_CONTROL,
         ).grid(row=2, column=1, columnspan=2, padx=(0, 16), pady=(0, 14), sticky="ew")
 
         controls = ctk.CTkFrame(self.root, fg_color="transparent")
@@ -242,21 +282,26 @@ class LiveTranslatorApp:
             controls,
             text="Start listening",
             command=self._toggle_listening,
-            fg_color=theme.ACCENT,
-            hover_color=theme.ACCENT_HOVER,
-            font=theme.section_font(),
-            height=38,
+            fg_color=theme.PRIMARY_ACTION_BG,
+            hover_color=theme.PRIMARY_ACTION_HOVER,
+            text_color=theme.PRIMARY_ACTION_TEXT,
+            corner_radius=theme.RADIUS_CONTROL,
+            font=theme.control_font(),
+            height=44,
         )
         self.toggle_button.grid(row=0, column=0, sticky="ew", padx=(0, 6))
         self.test_button = ctk.CTkButton(
             controls,
             text="Send test message",
             command=self._send_test_message,
-            fg_color=theme.BG_CONTROL,
-            hover_color=theme.BORDER,
-            text_color=theme.TEXT_PRIMARY,
-            font=theme.body_font(),
-            height=38,
+            fg_color=theme.CONTROL_BG,
+            hover_color=theme.CONTROL_BG_HOVER,
+            text_color=theme.ACCENT,
+            border_width=theme.BORDER_WIDTH,
+            border_color=theme.CONTROL_BORDER,
+            corner_radius=theme.RADIUS_CONTROL,
+            font=theme.control_font(),
+            height=44,
         )
         self.test_button.grid(row=0, column=1, sticky="ew", padx=(6, 0))
         ctk.CTkLabel(
@@ -274,6 +319,9 @@ class LiveTranslatorApp:
             font=theme.mono_font(),
             fg_color=theme.BG_PRIMARY,
             text_color=theme.TEXT_PRIMARY,
+            border_width=theme.BORDER_WIDTH,
+            border_color=theme.CONTROL_BORDER,
+            corner_radius=theme.RADIUS_PANEL,
         )
         self.activity_log.grid(row=1, column=0, padx=16, pady=(0, 16), sticky="nsew")
 
@@ -358,7 +406,12 @@ class LiveTranslatorApp:
         )
         self.worker = threading.Thread(target=speech_worker.run, name="speech-listener", daemon=True)
         self.worker.start()
-        self.toggle_button.configure(text="Stop listening")
+        self.toggle_button.configure(
+            text="Stop listening",
+            fg_color=theme.STOP_ACTION_BG,
+            hover_color=theme.STOP_ACTION_HOVER,
+            text_color=theme.STOP_ACTION_TEXT,
+        )
         self.status_var.set("Listening")
         self._queue_log(f"Listening with: {microphone_name}")
 
@@ -390,7 +443,13 @@ class LiveTranslatorApp:
                     self.activity_log.see("end")
                     self.activity_log.configure(state="disabled")
                 elif message_type == "stopped":
-                    self.toggle_button.configure(state="normal", text="Start listening")
+                    self.toggle_button.configure(
+                        state="normal",
+                        text="Start listening",
+                        fg_color=theme.PRIMARY_ACTION_BG,
+                        hover_color=theme.PRIMARY_ACTION_HOVER,
+                        text_color=theme.PRIMARY_ACTION_TEXT,
+                    )
                     self.status_var.set("Stopped")
                     self._queue_log("Listener stopped.")
                 elif message_type == "hotkey_press":

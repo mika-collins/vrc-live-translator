@@ -4,14 +4,32 @@ from __future__ import annotations
 
 import customtkinter as ctk
 
-BG_PRIMARY = "#121212"
-BG_PANEL = "#1c1c1e"
-BG_CONTROL = "#232326"
-TEXT_PRIMARY = "#f5f5f7"
-TEXT_MUTED = "#9a9a9e"
-ACCENT = "#3b82f6"
-ACCENT_HOVER = "#2563eb"
-BORDER = "#2a2a2d"
+BG_PRIMARY = "#040d10"
+BG_PANEL = "#06171b"
+
+CONTROL_BG = "#07242b"
+CONTROL_BG_HOVER = "#0c3641"
+CONTROL_BORDER = "#053c48"
+
+BORDER = "#0d2a32"
+TEXT_PRIMARY = "#eaf7fb"
+TEXT_MUTED = "#4d7d8a"
+
+ACCENT = "#6ae3f9"
+ACCENT_HOVER = "#9aeefc"
+
+PRIMARY_ACTION_BG = "#3b82f6"
+PRIMARY_ACTION_HOVER = "#2563eb"
+PRIMARY_ACTION_TEXT = "#ffffff"
+
+STOP_ACTION_BG = "#dc2626"
+STOP_ACTION_HOVER = "#ef4444"
+STOP_ACTION_TEXT = "#ffffff"
+
+RADIUS_CONTROL = 8
+RADIUS_PANEL = 10
+
+BORDER_WIDTH = 2
 
 FONT_FAMILY = "Segoe UI"
 FONT_SIZE_TITLE = 16
@@ -30,6 +48,10 @@ def title_font() -> ctk.CTkFont:
 
 
 def section_font() -> ctk.CTkFont:
+    return ctk.CTkFont(family=FONT_FAMILY, size=FONT_SIZE_SECTION, weight="bold")
+
+
+def control_font() -> ctk.CTkFont:
     return ctk.CTkFont(family=FONT_FAMILY, size=FONT_SIZE_SECTION, weight="bold")
 
 
