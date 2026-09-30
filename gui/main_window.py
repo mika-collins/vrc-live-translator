@@ -38,8 +38,8 @@ class LiveTranslatorApp:
 
         self.root = root
         self.root.title(APP_TITLE)
-        self.root.geometry("780x660")
-        self.root.minsize(640, 540)
+        self.root.geometry("780x840")
+        self.root.minsize(640, 600)
         self.root.configure(fg_color=theme.BG_PRIMARY)
         try:
             self.root.iconbitmap(str(icons.ICO_PATH))
