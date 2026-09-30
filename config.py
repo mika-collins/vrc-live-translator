@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 APP_TITLE = "VRChat Live Translator"
+HEADER_TITLE = "Live Translator"
 
 VRCHAT_OSC_HOST = "127.0.0.1"
 VRCHAT_OSC_SEND_PORT = 9000

@@ -1,19 +1,21 @@
-"""Tk/ttk desktop window: wires the UI to the OSC, speech, and hotkey modules."""
+"""CustomTkinter desktop window: wires the UI to the OSC, speech, and hotkey modules."""
 
 from __future__ import annotations
 
 import queue
 import threading
 import tkinter as tk
-from tkinter import messagebox, ttk
-from tkinter.scrolledtext import ScrolledText
+from tkinter import messagebox
 
+import customtkinter as ctk
+import pyaudio
 import speech_recognition as sr
 
 from config import (
     APP_TITLE,
     CHATBOX_CHAR_LIMIT,
     DEFAULT_AVATAR_PARAMETER,
+    HEADER_TITLE,
     LANGUAGE_CODE_BY_LABEL,
     LANGUAGE_LABEL_BY_CODE,
     LANGUAGES,
@@ -24,16 +26,25 @@ from hotkey import HotkeyManager, format_key
 from osc_bridge import OscBridge
 from speech_worker import SpeechWorker
 
+from gui import icons, theme
+
 
 class LiveTranslatorApp:
     """Own the controls, worker thread, and message flow for the application."""
 
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(self, root: ctk.CTk) -> None:
         """Create the window and populate controls from local microphone data."""
+        theme.apply()
+
         self.root = root
         self.root.title(APP_TITLE)
-        self.root.geometry("760x620")
-        self.root.minsize(620, 500)
+        self.root.geometry("780x660")
+        self.root.minsize(640, 540)
+        self.root.configure(fg_color=theme.BG_PRIMARY)
+        try:
+            self.root.iconbitmap(str(icons.ICO_PATH))
+        except tk.TclError:
+            pass
 
         self.recognizer = sr.Recognizer()
         self.message_queue: queue.Queue[tuple[str, object]] = queue.Queue()
@@ -68,117 +79,215 @@ class LiveTranslatorApp:
         self.root.protocol("WM_DELETE_WINDOW", self._close)
 
     def _get_microphones(self) -> list[str]:
-        """Return input device names as reported by the default PyAudio host API."""
         self.microphone_indices: dict[str, int] = {}
         try:
-            names = sr.Microphone.list_microphone_names()
+            audio = pyaudio.PyAudio()
         except OSError as error:
             self._queue_log(f"Could not list microphones: {error}")
             return ["No microphone found"]
 
-        for index, name in enumerate(names):
-            self.microphone_indices[name] = index
+        try:
+            wdm_ks_host_apis = {
+                index
+                for index in range(audio.get_host_api_count())
+                if audio.get_host_api_info_by_index(index)["name"].startswith("Windows WDM-KS")
+            }
+
+            names: list[str] = []
+            for device_index in range(audio.get_device_count()):
+                info = audio.get_device_info_by_index(device_index)
+                if info.get("maxInputChannels", 0) <= 0:
+                    continue
+                if info.get("hostApi") in wdm_ks_host_apis:
+                    continue
+                name = info.get("name")
+                if not name:
+                    continue
+
+                matched_existing = next(
+                    (existing for existing in names if existing == name or existing.startswith(name) or name.startswith(existing)),
+                    None,
+                )
+                if matched_existing is None:
+                    names.append(name)
+                    self.microphone_indices[name] = device_index
+                    continue
+
+                if len(name) > len(matched_existing):
+                    first_index = self.microphone_indices.pop(matched_existing)
+                    names[names.index(matched_existing)] = name
+                    self.microphone_indices[name] = first_index
+        finally:
+            audio.terminate()
 
         return names or ["No microphone found"]
 
-    def _build_widgets(self) -> None:
-        """Build the form and the read-only activity log."""
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(3, weight=1)
+    def _section(self, parent: ctk.CTkBaseClass, title: str) -> ctk.CTkFrame:
+        """Build a titled panel matching the app's dark card style."""
+        outer = ctk.CTkFrame(parent, fg_color=theme.BG_PANEL, corner_radius=10, border_width=1, border_color=theme.BORDER)
+        ctk.CTkLabel(outer, text=title, font=theme.section_font(), text_color=theme.TEXT_PRIMARY).grid(
+            row=0, column=0, columnspan=4, padx=16, pady=(14, 4), sticky="w"
+        )
+        return outer
 
-        settings = ttk.LabelFrame(self.root, text="Translation settings", padding=12)
-        settings.grid(row=0, column=0, padx=16, pady=(16, 8), sticky="ew")
+    def _build_widgets(self) -> None:
+        """Build the header, form, controls, and read-only activity log."""
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(4, weight=1)
+
+        header = ctk.CTkFrame(self.root, fg_color=theme.BG_PANEL, corner_radius=0, height=68)
+        header.grid(row=0, column=0, sticky="ew")
+        header.grid_propagate(False)
+        header.columnconfigure(1, weight=1)
+        ctk.CTkLabel(
+            header, text="", image=icons.load("vrchat_white_48.png", (42, 42))
+        ).grid(row=0, column=0, padx=(16, 10), pady=10)
+        ctk.CTkLabel(
+            header, text=HEADER_TITLE, font=theme.title_font(), text_color=theme.TEXT_PRIMARY
+        ).grid(row=0, column=1, sticky="w", pady=10)
+
+        settings = self._section(self.root, "Translation settings")
+        settings.grid(row=1, column=0, padx=16, pady=(16, 8), sticky="ew")
         settings.columnconfigure(1, weight=1)
         settings.columnconfigure(3, weight=1)
 
-        ttk.Label(settings, text="Microphone").grid(row=0, column=0, padx=(0, 8), pady=5, sticky="w")
-        self.microphone_combo = ttk.Combobox(
-            settings,
-            textvariable=self.microphone_var,
-            values=self.microphones,
-            state="readonly",
+        ctk.CTkLabel(settings, text="Microphone", font=theme.body_font()).grid(
+            row=1, column=0, padx=(16, 8), pady=8, sticky="w"
         )
-        self.microphone_combo.grid(row=0, column=1, columnspan=3, pady=5, sticky="ew")
+        self.microphone_menu = ctk.CTkOptionMenu(
+            settings,
+            variable=self.microphone_var,
+            values=self.microphones,
+            fg_color=theme.BG_CONTROL,
+            button_color=theme.ACCENT,
+            button_hover_color=theme.ACCENT_HOVER,
+        )
+        self.microphone_menu.grid(row=1, column=1, columnspan=3, padx=(0, 16), pady=8, sticky="ew")
 
         language_labels = tuple(label for _, label in LANGUAGES)
 
-        ttk.Label(settings, text="Source language").grid(row=1, column=0, padx=(0, 8), pady=5, sticky="w")
-        self.source_combo = ttk.Combobox(
+        ctk.CTkLabel(settings, text="Source language", font=theme.body_font()).grid(
+            row=2, column=0, padx=(16, 8), pady=8, sticky="w"
+        )
+        self.source_menu = ctk.CTkOptionMenu(
             settings,
-            textvariable=self.source_language_display_var,
+            variable=self.source_language_display_var,
             values=language_labels,
-            state="readonly",
-            width=26,
+            command=self._on_source_language_change,
+            fg_color=theme.BG_CONTROL,
+            button_color=theme.ACCENT,
+            button_hover_color=theme.ACCENT_HOVER,
         )
-        self.source_combo.grid(row=1, column=1, pady=5, sticky="ew")
-        self.source_combo.bind(
-            "<<ComboboxSelected>>",
-            lambda event: self.source_language_var.set(
-                LANGUAGE_CODE_BY_LABEL[self.source_language_display_var.get()]
-            ),
-        )
+        self.source_menu.grid(row=2, column=1, padx=(0, 8), pady=8, sticky="ew")
 
-        ttk.Label(settings, text="Target language").grid(row=1, column=2, padx=(20, 8), pady=5, sticky="w")
-        self.target_combo = ttk.Combobox(
+        ctk.CTkLabel(settings, text="Target language", font=theme.body_font()).grid(
+            row=2, column=2, padx=(8, 8), pady=8, sticky="w"
+        )
+        self.target_menu = ctk.CTkOptionMenu(
             settings,
-            textvariable=self.target_language_display_var,
+            variable=self.target_language_display_var,
             values=language_labels,
-            state="readonly",
-            width=26,
+            command=self._on_target_language_change,
+            fg_color=theme.BG_CONTROL,
+            button_color=theme.ACCENT,
+            button_hover_color=theme.ACCENT_HOVER,
         )
-        self.target_combo.grid(row=1, column=3, pady=5, sticky="ew")
-        self.target_combo.bind(
-            "<<ComboboxSelected>>",
-            lambda event: self.target_language_var.set(
-                LANGUAGE_CODE_BY_LABEL[self.target_language_display_var.get()]
-            ),
-        )
+        self.target_menu.grid(row=2, column=3, padx=(0, 16), pady=8, sticky="ew")
 
-        ttk.Checkbutton(
+        ctk.CTkCheckBox(
             settings,
             text="Mute assist (transcribe only)",
             variable=self.transcribe_only_var,
             command=self._on_transcribe_only_toggle,
-        ).grid(row=2, column=0, columnspan=4, pady=(8, 0), sticky="w")
+            font=theme.body_font(),
+            fg_color=theme.ACCENT,
+            hover_color=theme.ACCENT_HOVER,
+        ).grid(row=3, column=0, columnspan=4, padx=16, pady=(4, 14), sticky="w")
 
-        hotkeys = ttk.LabelFrame(self.root, text="Hotkeys & VR control", padding=12)
-        hotkeys.grid(row=1, column=0, padx=16, pady=(0, 8), sticky="ew")
+        hotkeys = self._section(self.root, "Hotkeys & VR control")
+        hotkeys.grid(row=2, column=0, padx=16, pady=(0, 8), sticky="ew")
         hotkeys.columnconfigure(1, weight=1)
 
-        ttk.Label(hotkeys, text="Desktop hotkey (toggle)").grid(row=0, column=0, padx=(0, 8), pady=5, sticky="w")
-        ttk.Label(hotkeys, textvariable=self.hotkey_display_var, width=14).grid(row=0, column=1, pady=5, sticky="w")
-        self.change_hotkey_button = ttk.Button(hotkeys, text="Change...", command=self._start_hotkey_capture)
-        self.change_hotkey_button.grid(row=0, column=2, pady=5, sticky="e")
-        if not HOTKEY_AVAILABLE:
-            self.change_hotkey_button.state(["disabled"])
-
-        ttk.Label(hotkeys, text="VRChat avatar parameter").grid(row=1, column=0, padx=(0, 8), pady=5, sticky="w")
-        ttk.Entry(hotkeys, textvariable=self.avatar_parameter_var).grid(
-            row=1, column=1, columnspan=2, pady=5, sticky="ew"
+        ctk.CTkLabel(hotkeys, text="Desktop hotkey (toggle)", font=theme.body_font()).grid(
+            row=1, column=0, padx=(16, 8), pady=8, sticky="w"
         )
+        ctk.CTkLabel(
+            hotkeys, textvariable=self.hotkey_display_var, font=theme.mono_font(), text_color=theme.ACCENT, width=90
+        ).grid(row=1, column=1, pady=8, sticky="w")
+        self.change_hotkey_button = ctk.CTkButton(
+            hotkeys,
+            text="Change...",
+            command=self._start_hotkey_capture,
+            fg_color=theme.BG_CONTROL,
+            hover_color=theme.BORDER,
+            text_color=theme.TEXT_PRIMARY,
+            width=100,
+        )
+        self.change_hotkey_button.grid(row=1, column=2, padx=(8, 16), pady=8, sticky="e")
+        if not HOTKEY_AVAILABLE:
+            self.change_hotkey_button.configure(state="disabled")
 
-        controls = ttk.Frame(self.root, padding=(16, 8))
-        controls.grid(row=2, column=0, sticky="ew")
+        ctk.CTkLabel(hotkeys, text="VRChat avatar parameter", font=theme.body_font()).grid(
+            row=2, column=0, padx=(16, 8), pady=(0, 14), sticky="w"
+        )
+        ctk.CTkEntry(
+            hotkeys, textvariable=self.avatar_parameter_var, fg_color=theme.BG_CONTROL, border_color=theme.BORDER
+        ).grid(row=2, column=1, columnspan=2, padx=(0, 16), pady=(0, 14), sticky="ew")
+
+        controls = ctk.CTkFrame(self.root, fg_color="transparent")
+        controls.grid(row=3, column=0, padx=16, pady=8, sticky="ew")
         controls.columnconfigure(0, weight=1)
         controls.columnconfigure(1, weight=1)
-        self.toggle_button = ttk.Button(controls, text="Start listening", command=self._toggle_listening)
+        self.toggle_button = ctk.CTkButton(
+            controls,
+            text="Start listening",
+            command=self._toggle_listening,
+            fg_color=theme.ACCENT,
+            hover_color=theme.ACCENT_HOVER,
+            font=theme.section_font(),
+            height=38,
+        )
         self.toggle_button.grid(row=0, column=0, sticky="ew", padx=(0, 6))
-        self.test_button = ttk.Button(controls, text="Send test message", command=self._send_test_message)
+        self.test_button = ctk.CTkButton(
+            controls,
+            text="Send test message",
+            command=self._send_test_message,
+            fg_color=theme.BG_CONTROL,
+            hover_color=theme.BORDER,
+            text_color=theme.TEXT_PRIMARY,
+            font=theme.body_font(),
+            height=38,
+        )
         self.test_button.grid(row=0, column=1, sticky="ew", padx=(6, 0))
-        ttk.Label(controls, textvariable=self.status_var).grid(row=1, column=0, columnspan=2, pady=(6, 0))
+        ctk.CTkLabel(
+            controls, textvariable=self.status_var, font=theme.body_font(), text_color=theme.TEXT_MUTED
+        ).grid(row=1, column=0, columnspan=2, pady=(8, 0))
 
-        log_frame = ttk.LabelFrame(self.root, text="Activity log", padding=8)
-        log_frame.grid(row=3, column=0, padx=16, pady=(8, 16), sticky="nsew")
-        log_frame.rowconfigure(0, weight=1)
+        log_frame = self._section(self.root, "Activity log")
+        log_frame.grid(row=4, column=0, padx=16, pady=(8, 16), sticky="nsew")
+        log_frame.rowconfigure(1, weight=1)
         log_frame.columnconfigure(0, weight=1)
-        self.activity_log = ScrolledText(log_frame, state="disabled", wrap=tk.WORD, height=16)
-        self.activity_log.grid(row=0, column=0, sticky="nsew")
+        self.activity_log = ctk.CTkTextbox(
+            log_frame,
+            state="disabled",
+            wrap="word",
+            font=theme.mono_font(),
+            fg_color=theme.BG_PRIMARY,
+            text_color=theme.TEXT_PRIMARY,
+        )
+        self.activity_log.grid(row=1, column=0, padx=16, pady=(0, 16), sticky="nsew")
 
         self._queue_log("Ready. Choose a microphone and press Start listening.")
 
+    def _on_source_language_change(self, _selected_label: str) -> None:
+        self.source_language_var.set(LANGUAGE_CODE_BY_LABEL[self.source_language_display_var.get()])
+
+    def _on_target_language_change(self, _selected_label: str) -> None:
+        self.target_language_var.set(LANGUAGE_CODE_BY_LABEL[self.target_language_display_var.get()])
+
     def _on_transcribe_only_toggle(self) -> None:
         """Grey out the target language selector while transcribe only mode is active."""
-        self.target_combo.configure(state="disabled" if self.transcribe_only_var.get() else "readonly")
+        self.target_menu.configure(state="disabled" if self.transcribe_only_var.get() else "normal")
 
     def _send_test_message(self) -> None:
         """Send a fixed string straight to VRChat, bypassing mic and translation."""
@@ -201,7 +310,7 @@ class LiveTranslatorApp:
     def _start_hotkey_capture(self) -> None:
         """Arm capture mode so the next key press becomes the new hotkey."""
         self.hotkey_manager.begin_capture()
-        self.change_hotkey_button.state(["disabled"])
+        self.change_hotkey_button.configure(state="disabled")
         self.hotkey_display_var.set("press a key...")
         self._queue_log("Press any key to set the new desktop hotkey...")
 
@@ -209,7 +318,7 @@ class LiveTranslatorApp:
         """Apply the captured key as the new hotkey (runs on the Tk main thread)."""
         self.hotkey_manager.set_hotkey(key)
         self.hotkey_display_var.set(format_key(key))
-        self.change_hotkey_button.state(["!disabled"])
+        self.change_hotkey_button.configure(state="normal")
         self._queue_log(f"Desktop hotkey set to: {self.hotkey_display_var.get()}")
 
     def _start_osc_server(self) -> None:
@@ -256,8 +365,7 @@ class LiveTranslatorApp:
     def _stop_listening(self) -> None:
         """Ask the worker to finish its current listen cycle and stop."""
         self.stop_event.set()
-        self.toggle_button.configure(text="Stopping...")
-        self.toggle_button.state(["disabled"])
+        self.toggle_button.configure(text="Stopping...", state="disabled")
         self._queue_log("Stopping listener...")
 
     def _send_to_vrchat(self, text: str) -> None:
@@ -278,12 +386,11 @@ class LiveTranslatorApp:
                 message_type, message = self.message_queue.get_nowait()
                 if message_type == "log":
                     self.activity_log.configure(state="normal")
-                    self.activity_log.insert(tk.END, f"{message}\n")
-                    self.activity_log.see(tk.END)
+                    self.activity_log.insert("end", f"{message}\n")
+                    self.activity_log.see("end")
                     self.activity_log.configure(state="disabled")
                 elif message_type == "stopped":
-                    self.toggle_button.state(["!disabled"])
-                    self.toggle_button.configure(text="Start listening")
+                    self.toggle_button.configure(state="normal", text="Start listening")
                     self.status_var.set("Stopped")
                     self._queue_log("Listener stopped.")
                 elif message_type == "hotkey_press":

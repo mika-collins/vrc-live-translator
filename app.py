@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import tkinter as tk
+import customtkinter as ctk
 
 from gui import LiveTranslatorApp
 
 
 def main() -> None:
     """Launch the desktop application."""
-    root = tk.Tk()
+    root = ctk.CTk()
     LiveTranslatorApp(root)
     root.mainloop()
 
