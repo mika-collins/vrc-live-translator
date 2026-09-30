@@ -8,7 +8,6 @@ import customtkinter as ctk
 from PIL import Image
 
 ICONS_DIR = Path(__file__).resolve().parent.parent / "assets" / "icons"
-ICO_PATH = ICONS_DIR / "microphone.ico"
 
 
 def load(file_name: str, size: tuple[int, int]) -> ctk.CTkImage:

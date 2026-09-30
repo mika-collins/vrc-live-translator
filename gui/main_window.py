@@ -41,10 +41,6 @@ class LiveTranslatorApp:
         self.root.geometry("780x840")
         self.root.minsize(640, 600)
         self.root.configure(fg_color=theme.BG_PRIMARY)
-        try:
-            self.root.iconbitmap(str(icons.ICO_PATH))
-        except tk.TclError:
-            pass
 
         self.recognizer = sr.Recognizer()
         self.message_queue: queue.Queue[tuple[str, object]] = queue.Queue()
@@ -141,12 +137,12 @@ class LiveTranslatorApp:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(4, weight=1)
 
-        header = ctk.CTkFrame(self.root, fg_color=theme.BG_PRIMARY, corner_radius=0, height=68)
+        header = ctk.CTkFrame(self.root, fg_color=theme.BG_PRIMARY, corner_radius=0, height=84)
         header.grid(row=0, column=0, sticky="ew")
         header.grid_propagate(False)
         header.columnconfigure(1, weight=1)
         ctk.CTkLabel(
-            header, text="", image=icons.load("vrchat_white_48.png", (42, 42))
+            header, text="", image=icons.load("vrchat_white_96.png", (60, 60))
         ).grid(row=0, column=0, padx=(16, 10), pady=10)
         ctk.CTkLabel(
             header, text=HEADER_TITLE, font=theme.title_font(), text_color=theme.TEXT_PRIMARY
