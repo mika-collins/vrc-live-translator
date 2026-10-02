@@ -6,6 +6,7 @@ import queue
 import threading
 import tkinter as tk
 from tkinter import messagebox
+from typing import cast
 
 import customtkinter as ctk
 import pyaudio
@@ -91,7 +92,7 @@ class LiveTranslatorApp:
             wdm_ks_host_apis = {
                 index
                 for index in range(audio.get_host_api_count())
-                if audio.get_host_api_info_by_index(index)["name"].startswith(
+                if str(audio.get_host_api_info_by_index(index)["name"]).startswith(
                     "Windows WDM-KS"
                 )
             }
@@ -99,11 +100,11 @@ class LiveTranslatorApp:
             names: list[str] = []
             for device_index in range(audio.get_device_count()):
                 info = audio.get_device_info_by_index(device_index)
-                if info.get("maxInputChannels", 0) <= 0:
+                if int(info.get("maxInputChannels", 0)) <= 0:
                     continue
                 if info.get("hostApi") in wdm_ks_host_apis:
                     continue
-                name = info.get("name")
+                name = str(info.get("name", ""))
                 if not name:
                     continue
 
@@ -131,7 +132,7 @@ class LiveTranslatorApp:
 
         return names or ["No microphone found"]
 
-    def _section(self, parent: ctk.CTkBaseClass, title: str) -> ctk.CTkFrame:
+    def _section(self, parent: tk.Misc, title: str) -> ctk.CTkFrame:
         """Build a titled panel matching the app's dark card style."""
         outer = ctk.CTkFrame(
             parent,
@@ -193,7 +194,7 @@ class LiveTranslatorApp:
             row=1, column=1, columnspan=3, padx=(0, 16), pady=8, sticky="ew"
         )
 
-        language_labels = tuple(label for _, label in LANGUAGES)
+        language_labels = [label for _, label in LANGUAGES]
 
         ctk.CTkLabel(settings, text="Source language", font=theme.body_font()).grid(
             row=2, column=0, padx=(16, 8), pady=8, sticky="w"
@@ -498,7 +499,7 @@ class LiveTranslatorApp:
                 elif message_type == "hotkey_captured":
                     self._finish_hotkey_capture(message)
                 elif message_type == "avatar_param":
-                    address, value = message
+                    address, value = cast(tuple[str, bool], message)
                     expected_address = (
                         f"/avatar/parameters/{self.avatar_parameter_var.get()}"
                     )

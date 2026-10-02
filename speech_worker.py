@@ -54,7 +54,9 @@ class SpeechWorker:
                         audio = self._recognizer.listen(
                             source, timeout=1, phrase_time_limit=12
                         )
-                        transcript = self._recognizer.recognize_google(
+                        # recognize_google is attached to Recognizer at runtime, so
+                        # Pyright can't see it.
+                        transcript = self._recognizer.recognize_google(  # pyright: ignore[reportAttributeAccessIssue]
                             audio, language=self._get_source_language()
                         )
                         self._on_log(f"You: {transcript}")

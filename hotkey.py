@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 try:
     from pynput import keyboard as pynput_keyboard
 except ImportError:
     pynput_keyboard = None
+
+if TYPE_CHECKING:
+    from pynput.keyboard import Listener
 
 AVAILABLE = pynput_keyboard is not None
 DEFAULT_HOTKEY = pynput_keyboard.Key.f9 if pynput_keyboard else None
@@ -17,7 +21,7 @@ def format_key(key) -> str:
     """Render a pynput key object as a short human-readable label."""
     if key is None:
         return "(none)"
-    if isinstance(key, pynput_keyboard.KeyCode):
+    if pynput_keyboard is not None and isinstance(key, pynput_keyboard.KeyCode):
         return (key.char or str(key.vk)).upper()
     return str(key).replace("Key.", "").upper()
 
@@ -37,7 +41,7 @@ class HotkeyManager:
         self.hotkey = DEFAULT_HOTKEY
         self._on_toggle = on_toggle
         self._on_captured = on_captured
-        self._listener: pynput_keyboard.Listener | None = None
+        self._listener: Listener | None = None
         self._held = False
         self._capturing = False
 
