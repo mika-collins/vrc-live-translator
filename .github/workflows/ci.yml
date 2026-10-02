@@ -38,6 +38,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: ruff format --check --diff .
 
+      - name: actionlint
+        if: ${{ !cancelled() }}
+        run: actionlint
+
   build:
     name: Install & compile
     runs-on: windows-latest
