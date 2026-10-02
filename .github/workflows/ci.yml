@@ -87,3 +87,27 @@ jobs:
 
       - name: Pyright
         run: pyright
+
+  audit:
+    name: Security audit
+    # Windows so dependencies resolve the same way they do for users.
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dev tools
+        run: pip install -r requirements-dev.txt
+
+      - name: pip-audit
+        run: >-
+          pip-audit
+          -r requirements.txt
+          -r requirements-dev.txt
+          --desc
