@@ -9,10 +9,16 @@ on:
 permissions:
   contents: read
 
+# Cancel an in-progress PR run when a newer commit is pushed to the same PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
 
@@ -31,3 +37,28 @@ jobs:
       - name: Ruff format
         if: ${{ !cancelled() }}
         run: ruff format --check --diff .
+
+  build:
+    name: Install & compile
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check dependency compatibility
+        run: pip check
+
+      - name: Compile all files
+        run: python -m compileall -q .
+
+      - name: Import app
+        run: python -c "import app"
