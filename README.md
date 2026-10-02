@@ -24,7 +24,7 @@ That means:
 - **Python 3.11+**: primary language.
 - **Tkinter/ttk**: Python's built-in GUI toolkit; builds the app's window and controls.
 - **SpeechRecognition + Google Web Speech API**: converts captured microphone audio into text.
-- **deep-translator (MyMemory backend)**: translates the transcript between languages via MyMemory's free translation API (anonymous tier capped around 5,000 words/day).
+- **MyMemory translation API**: translates the transcript between languages via MyMemory's free API, called directly with the Python standard library (anonymous tier capped around 5,000 words/day).
 - **python-osc**: an OSC client and server; sends the translated text to VRChat's Chatbox and receives avatar parameter changes back from it (for the avatar toggle).
 - **PyAudio**: gives SpeechRecognition access to the system microphone.
 - **pynput**: a global keyboard hook that toggles listening via the desktop hotkey, even when VRChat has focus.

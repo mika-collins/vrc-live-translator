@@ -7,7 +7,7 @@ from typing import Callable
 
 import speech_recognition as sr
 
-from translator import translate_text
+from translator import TranslationError, translate_text
 
 
 class SpeechWorker:
@@ -64,6 +64,8 @@ class SpeechWorker:
                         self._on_log("Speech was not clear enough to transcribe.")
                     except sr.RequestError as error:
                         self._on_log(f"Speech recognition network error: {error}")
+                    except TranslationError as error:
+                        self._on_log(f"Translation failed: {error}")
                     except (OSError, ConnectionError) as error:
                         self._on_log(f"Audio or network error: {error}")
                     except Exception as error:
