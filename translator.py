@@ -1,5 +1,5 @@
 """Text translation via the free MyMemory endpoint."""
-
+import os # Unused import to test Ruff
 from __future__ import annotations
 
 from deep_translator import MyMemoryTranslator
