@@ -6,6 +6,7 @@ import queue
 import threading
 import tkinter as tk
 from tkinter import messagebox
+from typing import cast
 
 import customtkinter as ctk
 import pyaudio
@@ -21,12 +22,11 @@ from config import (
     LANGUAGES,
     VRCHAT_OSC_LISTEN_PORT,
 )
+from gui import icons, theme
 from hotkey import AVAILABLE as HOTKEY_AVAILABLE
 from hotkey import HotkeyManager, format_key
 from osc_bridge import OscBridge
 from speech_worker import SpeechWorker
-
-from gui import icons, theme
 
 
 class LiveTranslatorApp:
@@ -61,10 +61,16 @@ class LiveTranslatorApp:
         self.microphone_var = tk.StringVar(value=self.microphones[0])
         self.source_language_var = tk.StringVar(value="en-US")
         self.target_language_var = tk.StringVar(value="es-ES")
-        self.source_language_display_var = tk.StringVar(value=LANGUAGE_LABEL_BY_CODE["en-US"])
-        self.target_language_display_var = tk.StringVar(value=LANGUAGE_LABEL_BY_CODE["es-ES"])
+        self.source_language_display_var = tk.StringVar(
+            value=LANGUAGE_LABEL_BY_CODE["en-US"]
+        )
+        self.target_language_display_var = tk.StringVar(
+            value=LANGUAGE_LABEL_BY_CODE["es-ES"]
+        )
         self.transcribe_only_var = tk.BooleanVar(value=False)
-        self.hotkey_display_var = tk.StringVar(value=format_key(self.hotkey_manager.hotkey))
+        self.hotkey_display_var = tk.StringVar(
+            value=format_key(self.hotkey_manager.hotkey)
+        )
         self.avatar_parameter_var = tk.StringVar(value=DEFAULT_AVATAR_PARAMETER)
         self.status_var = tk.StringVar(value="Stopped")
 
@@ -86,22 +92,30 @@ class LiveTranslatorApp:
             wdm_ks_host_apis = {
                 index
                 for index in range(audio.get_host_api_count())
-                if audio.get_host_api_info_by_index(index)["name"].startswith("Windows WDM-KS")
+                if str(audio.get_host_api_info_by_index(index)["name"]).startswith(
+                    "Windows WDM-KS"
+                )
             }
 
             names: list[str] = []
             for device_index in range(audio.get_device_count()):
                 info = audio.get_device_info_by_index(device_index)
-                if info.get("maxInputChannels", 0) <= 0:
+                if int(info.get("maxInputChannels", 0)) <= 0:
                     continue
                 if info.get("hostApi") in wdm_ks_host_apis:
                     continue
-                name = info.get("name")
+                name = str(info.get("name", ""))
                 if not name:
                     continue
 
                 matched_existing = next(
-                    (existing for existing in names if existing == name or existing.startswith(name) or name.startswith(existing)),
+                    (
+                        existing
+                        for existing in names
+                        if existing == name
+                        or existing.startswith(name)
+                        or name.startswith(existing)
+                    ),
                     None,
                 )
                 if matched_existing is None:
@@ -118,7 +132,7 @@ class LiveTranslatorApp:
 
         return names or ["No microphone found"]
 
-    def _section(self, parent: ctk.CTkBaseClass, title: str) -> ctk.CTkFrame:
+    def _section(self, parent: tk.Misc, title: str) -> ctk.CTkFrame:
         """Build a titled panel matching the app's dark card style."""
         outer = ctk.CTkFrame(
             parent,
@@ -127,9 +141,9 @@ class LiveTranslatorApp:
             border_width=theme.BORDER_WIDTH,
             border_color=theme.CONTROL_BORDER,
         )
-        ctk.CTkLabel(outer, text=title, font=theme.section_font(), text_color=theme.TEXT_PRIMARY).grid(
-            row=0, column=0, columnspan=4, padx=16, pady=(14, 4), sticky="w"
-        )
+        ctk.CTkLabel(
+            outer, text=title, font=theme.section_font(), text_color=theme.TEXT_PRIMARY
+        ).grid(row=0, column=0, columnspan=4, padx=16, pady=(14, 4), sticky="w")
         return outer
 
     def _build_widgets(self) -> None:
@@ -137,7 +151,9 @@ class LiveTranslatorApp:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(4, weight=1)
 
-        header = ctk.CTkFrame(self.root, fg_color=theme.BG_PRIMARY, corner_radius=0, height=84)
+        header = ctk.CTkFrame(
+            self.root, fg_color=theme.BG_PRIMARY, corner_radius=0, height=84
+        )
         header.grid(row=0, column=0, sticky="ew")
         header.grid_propagate(False)
         header.columnconfigure(1, weight=1)
@@ -145,7 +161,10 @@ class LiveTranslatorApp:
             header, text="", image=icons.load("vrchat_white_96.png", (60, 60))
         ).grid(row=0, column=0, padx=(16, 10), pady=10)
         ctk.CTkLabel(
-            header, text=HEADER_TITLE, font=theme.title_font(), text_color=theme.TEXT_PRIMARY
+            header,
+            text=HEADER_TITLE,
+            font=theme.title_font(),
+            text_color=theme.TEXT_PRIMARY,
         ).grid(row=0, column=1, sticky="w", pady=10)
 
         settings = self._section(self.root, "Translation settings")
@@ -171,9 +190,11 @@ class LiveTranslatorApp:
             height=36,
             font=theme.control_font(),
         )
-        self.microphone_menu.grid(row=1, column=1, columnspan=3, padx=(0, 16), pady=8, sticky="ew")
+        self.microphone_menu.grid(
+            row=1, column=1, columnspan=3, padx=(0, 16), pady=8, sticky="ew"
+        )
 
-        language_labels = tuple(label for _, label in LANGUAGES)
+        language_labels = [label for _, label in LANGUAGES]
 
         ctk.CTkLabel(settings, text="Source language", font=theme.body_font()).grid(
             row=2, column=0, padx=(16, 8), pady=8, sticky="w"
@@ -234,11 +255,15 @@ class LiveTranslatorApp:
         hotkeys.grid(row=2, column=0, padx=16, pady=(0, 8), sticky="ew")
         hotkeys.columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(hotkeys, text="Desktop hotkey (toggle)", font=theme.body_font()).grid(
-            row=1, column=0, padx=(16, 8), pady=8, sticky="w"
-        )
         ctk.CTkLabel(
-            hotkeys, textvariable=self.hotkey_display_var, font=theme.mono_font(), text_color=theme.ACCENT, width=90
+            hotkeys, text="Desktop hotkey (toggle)", font=theme.body_font()
+        ).grid(row=1, column=0, padx=(16, 8), pady=8, sticky="w")
+        ctk.CTkLabel(
+            hotkeys,
+            textvariable=self.hotkey_display_var,
+            font=theme.mono_font(),
+            text_color=theme.ACCENT,
+            width=90,
         ).grid(row=1, column=1, pady=8, sticky="w")
         self.change_hotkey_button = ctk.CTkButton(
             hotkeys,
@@ -253,13 +278,15 @@ class LiveTranslatorApp:
             font=theme.control_font(),
             width=100,
         )
-        self.change_hotkey_button.grid(row=1, column=2, padx=(8, 16), pady=8, sticky="e")
+        self.change_hotkey_button.grid(
+            row=1, column=2, padx=(8, 16), pady=8, sticky="e"
+        )
         if not HOTKEY_AVAILABLE:
             self.change_hotkey_button.configure(state="disabled")
 
-        ctk.CTkLabel(hotkeys, text="VRChat avatar parameter", font=theme.body_font()).grid(
-            row=2, column=0, padx=(16, 8), pady=(0, 14), sticky="w"
-        )
+        ctk.CTkLabel(
+            hotkeys, text="VRChat avatar parameter", font=theme.body_font()
+        ).grid(row=2, column=0, padx=(16, 8), pady=(0, 14), sticky="w")
         ctk.CTkEntry(
             hotkeys,
             textvariable=self.avatar_parameter_var,
@@ -301,7 +328,10 @@ class LiveTranslatorApp:
         )
         self.test_button.grid(row=0, column=1, sticky="ew", padx=(6, 0))
         ctk.CTkLabel(
-            controls, textvariable=self.status_var, font=theme.body_font(), text_color=theme.TEXT_MUTED
+            controls,
+            textvariable=self.status_var,
+            font=theme.body_font(),
+            text_color=theme.TEXT_MUTED,
         ).grid(row=1, column=0, columnspan=2, pady=(8, 0))
 
         log_frame = self._section(self.root, "Activity log")
@@ -324,14 +354,20 @@ class LiveTranslatorApp:
         self._queue_log("Ready. Choose a microphone and press Start listening.")
 
     def _on_source_language_change(self, _selected_label: str) -> None:
-        self.source_language_var.set(LANGUAGE_CODE_BY_LABEL[self.source_language_display_var.get()])
+        self.source_language_var.set(
+            LANGUAGE_CODE_BY_LABEL[self.source_language_display_var.get()]
+        )
 
     def _on_target_language_change(self, _selected_label: str) -> None:
-        self.target_language_var.set(LANGUAGE_CODE_BY_LABEL[self.target_language_display_var.get()])
+        self.target_language_var.set(
+            LANGUAGE_CODE_BY_LABEL[self.target_language_display_var.get()]
+        )
 
     def _on_transcribe_only_toggle(self) -> None:
         """Grey out the target language selector while transcribe only mode is active."""
-        self.target_menu.configure(state="disabled" if self.transcribe_only_var.get() else "normal")
+        self.target_menu.configure(
+            state="disabled" if self.transcribe_only_var.get() else "normal"
+        )
 
     def _send_test_message(self) -> None:
         """Send a fixed string straight to VRChat, bypassing mic and translation."""
@@ -347,9 +383,13 @@ class LiveTranslatorApp:
             return
         try:
             self.hotkey_manager.start()
-            self._queue_log(f"Desktop push-to-talk hotkey armed: {self.hotkey_display_var.get()}")
+            self._queue_log(
+                f"Desktop push-to-talk hotkey armed: {self.hotkey_display_var.get()}"
+            )
         except Exception as error:
-            self._queue_log(f"Could not start the desktop hotkey listener ({type(error).__name__}): {error}")
+            self._queue_log(
+                f"Could not start the desktop hotkey listener ({type(error).__name__}): {error}"
+            )
 
     def _start_hotkey_capture(self) -> None:
         """Arm capture mode so the next key press becomes the new hotkey."""
@@ -369,9 +409,13 @@ class LiveTranslatorApp:
         """Listen for VRChat avatar parameter changes, ex. an Expression Menu toggle."""
         try:
             self.osc_bridge.start_server()
-            self._queue_log(f"Listening for avatar OSC parameters on port {VRCHAT_OSC_LISTEN_PORT}.")
+            self._queue_log(
+                f"Listening for avatar OSC parameters on port {VRCHAT_OSC_LISTEN_PORT}."
+            )
         except OSError as error:
-            self._queue_log(f"Could not start the avatar OSC listener on port {VRCHAT_OSC_LISTEN_PORT}: {error}")
+            self._queue_log(
+                f"Could not start the avatar OSC listener on port {VRCHAT_OSC_LISTEN_PORT}: {error}"
+            )
 
     def _toggle_listening(self) -> None:
         """Start or stop the single background listening worker."""
@@ -400,7 +444,9 @@ class LiveTranslatorApp:
             on_result=self._send_to_vrchat,
             on_stopped=lambda: self.message_queue.put(("stopped", "")),
         )
-        self.worker = threading.Thread(target=speech_worker.run, name="speech-listener", daemon=True)
+        self.worker = threading.Thread(
+            target=speech_worker.run, name="speech-listener", daemon=True
+        )
         self.worker.start()
         self.toggle_button.configure(
             text="Stop listening",
@@ -453,8 +499,10 @@ class LiveTranslatorApp:
                 elif message_type == "hotkey_captured":
                     self._finish_hotkey_capture(message)
                 elif message_type == "avatar_param":
-                    address, value = message
-                    expected_address = f"/avatar/parameters/{self.avatar_parameter_var.get()}"
+                    address, value = cast(tuple[str, bool], message)
+                    expected_address = (
+                        f"/avatar/parameters/{self.avatar_parameter_var.get()}"
+                    )
                     if address != expected_address:
                         continue
                     is_listening = bool(self.worker and self.worker.is_alive())

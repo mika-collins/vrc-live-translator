@@ -101,3 +101,35 @@ to start/stop listening remotely, each in its own guide:
   sending and logs when it does, so a truncated message won't be a silent
   surprise, but it will still cut off mid-sentence.
 
+## Development
+
+All changes reach `main` through a pull request. Every pull request runs the
+checks in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+
+| Check | Tool | What it verifies |
+| --- | --- | --- |
+| Lint | [Ruff](https://docs.astral.sh/ruff/), [actionlint](https://github.com/rhysd/actionlint) | Code quality, formatting, and workflow file mistakes |
+| Install & compile | pip, `compileall` | Dependencies install and the app imports on Windows with Python 3.11 |
+| Type check | [Pyright](https://github.com/microsoft/pyright) | Type hints are consistent across the app and its libraries |
+| Security audit | [pip-audit](https://github.com/pypa/pip-audit) | No dependency has a known vulnerability |
+
+Install the development tools into the virtual environment (after the Quick
+Setup steps):
+
+```powershell
+pip install -r requirements-dev.txt
+```
+
+Run the same checks locally before pushing:
+
+```powershell
+ruff check .
+ruff format --check .
+pyright
+pip-audit -r requirements.txt -r requirements-dev.txt
+actionlint
+```
+
+`ruff check --fix .` and `ruff format .` fix most lint and formatting issues
+automatically.
+

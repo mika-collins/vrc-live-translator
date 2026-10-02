@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Callable
+from collections.abc import Callable
 
 import speech_recognition as sr
 
@@ -51,8 +51,12 @@ class SpeechWorker:
                 while not self._stop_event.is_set():
                     try:
                         # A short timeout lets the loop notice Stop promptly.
-                        audio = self._recognizer.listen(source, timeout=1, phrase_time_limit=12)
-                        transcript = self._recognizer.recognize_google(
+                        audio = self._recognizer.listen(
+                            source, timeout=1, phrase_time_limit=12
+                        )
+                        # recognize_google is attached to Recognizer at runtime, so
+                        # Pyright can't see it.
+                        transcript = self._recognizer.recognize_google(  # pyright: ignore[reportAttributeAccessIssue]
                             audio, language=self._get_source_language()
                         )
                         self._on_log(f"You: {transcript}")
@@ -70,7 +74,9 @@ class SpeechWorker:
                         self._on_log(f"Audio or network error: {error}")
                     except Exception as error:
                         # Catch-all for unexpected errors in the worker thread; prevent silent failure.
-                        self._on_log(f"Could not process phrase ({type(error).__name__}): {error}")
+                        self._on_log(
+                            f"Could not process phrase ({type(error).__name__}): {error}"
+                        )
         except (OSError, ValueError, IndexError) as error:
             self._on_log(f"Could not start microphone: {error}")
         finally:
