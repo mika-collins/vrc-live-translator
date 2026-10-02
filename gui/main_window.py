@@ -21,12 +21,11 @@ from config import (
     LANGUAGES,
     VRCHAT_OSC_LISTEN_PORT,
 )
+from gui import icons, theme
 from hotkey import AVAILABLE as HOTKEY_AVAILABLE
 from hotkey import HotkeyManager, format_key
 from osc_bridge import OscBridge
 from speech_worker import SpeechWorker
-
-from gui import icons, theme
 
 
 class LiveTranslatorApp:

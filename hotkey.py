@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 try:
     from pynput import keyboard as pynput_keyboard
@@ -37,7 +37,7 @@ class HotkeyManager:
         self.hotkey = DEFAULT_HOTKEY
         self._on_toggle = on_toggle
         self._on_captured = on_captured
-        self._listener: Optional["pynput_keyboard.Listener"] = None
+        self._listener: pynput_keyboard.Listener | None = None
         self._held = False
         self._capturing = False
 

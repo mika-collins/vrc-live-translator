@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
@@ -24,7 +24,7 @@ class OscBridge:
     def __init__(self, on_avatar_param: Callable[[str, bool], None]) -> None:
         self._client = SimpleUDPClient(VRCHAT_OSC_HOST, VRCHAT_OSC_SEND_PORT)
         self._on_avatar_param = on_avatar_param
-        self.server: Optional[ThreadingOSCUDPServer] = None
+        self.server: ThreadingOSCUDPServer | None = None
 
     def send_chatbox(self, text: str) -> tuple[str, bool]:
         """Send text to VRChat's Chatbox, truncating to the character limit.
