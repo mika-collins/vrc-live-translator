@@ -51,7 +51,9 @@ class SpeechWorker:
                 while not self._stop_event.is_set():
                     try:
                         # A short timeout lets the loop notice Stop promptly.
-                        audio = self._recognizer.listen(source, timeout=1, phrase_time_limit=12)
+                        audio = self._recognizer.listen(
+                            source, timeout=1, phrase_time_limit=12
+                        )
                         transcript = self._recognizer.recognize_google(
                             audio, language=self._get_source_language()
                         )
@@ -68,7 +70,9 @@ class SpeechWorker:
                         self._on_log(f"Audio or network error: {error}")
                     except Exception as error:
                         # Catch-all for unexpected errors in the worker thread; prevent silent failure.
-                        self._on_log(f"Could not process phrase ({type(error).__name__}): {error}")
+                        self._on_log(
+                            f"Could not process phrase ({type(error).__name__}): {error}"
+                        )
         except (OSError, ValueError, IndexError) as error:
             self._on_log(f"Could not start microphone: {error}")
         finally:

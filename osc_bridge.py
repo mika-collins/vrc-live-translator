@@ -42,8 +42,12 @@ class OscBridge:
         """Listen for VRChat avatar parameter changes, ex. an Expression Menu toggle."""
         dispatcher = Dispatcher()
         dispatcher.set_default_handler(self._handle_message)
-        self.server = ThreadingOSCUDPServer((VRCHAT_OSC_HOST, VRCHAT_OSC_LISTEN_PORT), dispatcher)
-        threading.Thread(target=self.server.serve_forever, name="osc-server", daemon=True).start()
+        self.server = ThreadingOSCUDPServer(
+            (VRCHAT_OSC_HOST, VRCHAT_OSC_LISTEN_PORT), dispatcher
+        )
+        threading.Thread(
+            target=self.server.serve_forever, name="osc-server", daemon=True
+        ).start()
 
     def _handle_message(self, address: str, *args) -> None:
         if not args:

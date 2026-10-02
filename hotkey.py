@@ -45,7 +45,9 @@ class HotkeyManager:
         """Start the global keyboard hook that works even when VRChat has focus."""
         if pynput_keyboard is None:
             return
-        self._listener = pynput_keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
+        self._listener = pynput_keyboard.Listener(
+            on_press=self._on_press, on_release=self._on_release
+        )
         self._listener.start()
 
     def begin_capture(self) -> None:
