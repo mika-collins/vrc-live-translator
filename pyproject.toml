@@ -16,3 +16,8 @@ select = [
 ignore = [
     "E501", # line length is handled by the formatter
 ]
+
+[tool.pyright]
+pythonVersion = "3.11"
+pythonPlatform = "Windows"
+typeCheckingMode = "basic"
