@@ -7,7 +7,6 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-MYMEMORY_URL = "https://api.mymemory.translated.net/get"
 MYMEMORY_MAX_QUERY_BYTES = 500
 REQUEST_TIMEOUT_SECONDS = 5
 
@@ -32,9 +31,10 @@ def _translate_mymemory(text: str, source: str, target: str) -> str:
 
     query = urllib.parse.urlencode({"q": text, "langpair": f"{source}|{target}"})
     try:
-        # MYMEMORY_URL is a fixed https:// constant, so no file: or custom schemes.
-        with urllib.request.urlopen(  # noqa: S310
-            f"{MYMEMORY_URL}?{query}", timeout=REQUEST_TIMEOUT_SECONDS
+        # Keep the https:// scheme written out here so Ruff's S310 rule can verify it.
+        with urllib.request.urlopen(
+            f"https://api.mymemory.translated.net/get?{query}",
+            timeout=REQUEST_TIMEOUT_SECONDS,
         ) as response:
             payload = json.load(response)
     except urllib.error.HTTPError as error:
