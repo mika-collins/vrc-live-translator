@@ -38,6 +38,8 @@ class LiveTranslatorApp:
 
         self.root = root
         self.root.title(APP_TITLE)
+        # Set before CustomTkinter applies its default icon; default= also covers dialogs.
+        self.root.iconbitmap(default=str(icons.APP_ICON))
         self.root.geometry("780x840")
         self.root.minsize(640, 600)
         self.root.configure(fg_color=theme.BG_PRIMARY)
