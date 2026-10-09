@@ -8,6 +8,7 @@ import customtkinter as ctk
 from PIL import Image
 
 ICONS_DIR = Path(__file__).resolve().parent.parent / "assets" / "icons"
+APP_ICON = ICONS_DIR / "live_translator.ico"
 
 
 def load(file_name: str, size: tuple[int, int]) -> ctk.CTkImage:
