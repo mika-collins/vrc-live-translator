@@ -133,3 +133,17 @@ actionlint
 `ruff check --fix .` and `ruff format .` fix most lint and formatting issues
 automatically.
 
+### Building the Windows executable
+
+The app is packaged with [PyInstaller](https://pyinstaller.org/) as a
+one-folder build, configured in
+[`VRCTranslator.spec`](VRCTranslator.spec):
+
+```powershell
+pip install -r requirements-build.txt
+pyinstaller --noconfirm VRCTranslator.spec
+```
+
+The output is `dist/VRCTranslator/`. Run
+`VRCTranslator.exe` inside it to test, or zip the whole folder to
+share it. The `_internal` folder must stay next to the `.exe`.
