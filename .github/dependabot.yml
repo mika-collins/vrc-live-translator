@@ -3,7 +3,7 @@
 version: 2
 
 updates:
-  # Python packages in requirements.txt and requirements-dev.txt.
+  # Python packages in requirements.txt, requirements-dev.txt and requirements-build.txt.
   - package-ecosystem: pip
     directory: "/"
     schedule:
