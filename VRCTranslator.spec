@@ -1,22 +1,29 @@
 # PyInstaller build spec for the Windows release.
-# Build with: pyinstaller VRCTranslator.spec
+# Build with: pyinstaller --noconfirm VRCTranslator.spec
 # Output: dist/VRCTranslator/ (one-folder build; zip it for distribution)
+#
+# Data files and runtime-selected modules for customtkinter, speech_recognition and
+# pynput are collected automatically by hooks in pyinstaller-hooks-contrib, which is
+# installed with PyInstaller. Only list things here that no hook covers.
 
-from PyInstaller.utils.hooks import collect_data_files
-
-datas = [("assets", "assets")]
-# CustomTkinter themes and fonts are loaded from the package directory at runtime.
-datas += collect_data_files("customtkinter")
-# recognize_google shells out to the flac encoder bundled inside speech_recognition.
-datas += collect_data_files("speech_recognition", include_py_files=False)
+# Bundled data files that the app never uses, matched by their path inside _internal.
+EXCLUDED_DATA = (
+    # Offline Sphinx speech model (~38 MB); the app only uses Google recognition.
+    "speech_recognition/pocketsphinx-data/",
+    # FLAC encoders for other platforms; Windows uses flac-win32.exe.
+    "speech_recognition/flac-linux-",
+    "speech_recognition/flac-mac",
+)
 
 a = Analysis(
     ["app.py"],
-    datas=datas,
-    # pynput picks its platform backend at runtime, so PyInstaller can't see it.
-    hiddenimports=["pynput.keyboard._win32", "pynput.mouse._win32"],
-    excludes=[],
+    datas=[("assets", "assets")],
 )
+a.datas = [
+    entry
+    for entry in a.datas
+    if not entry[0].replace("\\", "/").startswith(EXCLUDED_DATA)
+]
 pyz = PYZ(a.pure)
 
 exe = EXE(
