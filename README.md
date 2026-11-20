@@ -1,4 +1,4 @@
-# VRChat Live Translator
+# Live Translator for VRChat
 
 A free, lightweight Windows app that listens to a microphone, turns speech
 into text, translates it, and sends the result straight into the VRChat
@@ -6,7 +6,8 @@ Chatbox, so other players can read it in their own language. It runs
 alongside VRChat and talks to it through VRChat's built-in OSC feature; it
 doesn't modify the game.
 
-> VRChat Live Translator is not affiliated with or endorsed by VRChat Inc.
+> Live Translator for VRChat is an unofficial, fan-made project. It is not
+> affiliated with or endorsed by VRChat Inc.
 
 ## Download
 
@@ -58,10 +59,10 @@ folder, open PowerShell in that folder, and run the command below with
 
 1. **Enable OSC in VRChat.** Open the Action Menu, then
    **Options → OSC → Enabled**. This only needs to be done once.
-2. **Open VRChat Live Translator.**
+2. **Open Live Translator for VRChat.**
 3. **Choose a microphone**, the spoken language (**Source language**) and
    the language to translate to (**Target language**).
-4. Click **Send test message**. "VRC Live Translator test message" should
+4. Click **Send test message**. "Live Translator for VRChat test message" should
    appear in the Chatbox above the avatar in VRChat. If it doesn't, see
    [Troubleshooting](#troubleshooting).
 5. Click **Start listening** and speak. Each phrase is translated and posted
@@ -89,7 +90,9 @@ Step-by-step desktop and VR guides are coming soon.
 To work, the app sends data to two free online services:
 
 - **Recorded speech** is sent to Google's speech recognition service to be
-  turned into text.
+  turned into text. This is a free service that Google doesn't officially
+  support for apps like this one, so it may slow down, limit requests or
+  stop working without notice.
 - **The recognized text** is sent to [MyMemory](https://mymemory.translated.net/)
   to be translated.
 
@@ -112,6 +115,13 @@ app is listening.
   **Let desktop apps access your microphone**.
 - Check that the right microphone is selected and isn't muted in Windows.
 
+**Speech isn't turned into text, or the log shows "Speech recognition network error"**
+- Check the internet connection. Speech recognition runs online through a
+  free Google service.
+- Google may limit or block this service at times, as it isn't officially
+  supported for apps like this one. If the error keeps coming back, wait a
+  while and try again.
+
 **Translation stops working partway through the day**
 - The free MyMemory service allows about 5,000 words per day. The Activity
   log shows a "quota exceeded" message when the limit is reached. It resets
@@ -128,3 +138,14 @@ app is listening.
 Any feedback is welcome. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for how the app works, how to run it from
 source, and how releases are built.
+
+## License
+
+Live Translator for VRChat is free and open source under the
+[MIT License](LICENSE). It can be used, changed and shared freely, as long
+as the license notice is kept, and it comes with no warranty.
+
+The download includes open-source software from other projects, each under
+its own license. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for the
+list. Copies of the notices and license texts are included in the download
+as `THIRD-PARTY-NOTICES.txt` and the `licenses` folder.

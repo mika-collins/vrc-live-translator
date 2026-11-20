@@ -1,8 +1,8 @@
-"""Shared constants for the VRChat Live Translator app."""
+"""Shared constants for the Live Translator for VRChat app."""
 
 from __future__ import annotations
 
-APP_TITLE = "VRChat Live Translator"
+APP_TITLE = "Live Translator for VRChat"
 HEADER_TITLE = "Live Translator"
 
 VRCHAT_OSC_HOST = "127.0.0.1"
