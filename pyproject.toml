@@ -21,3 +21,5 @@ ignore = [
 pythonVersion = "3.11"
 pythonPlatform = "Windows"
 typeCheckingMode = "basic"
+# Skip PyInstaller's generated output, which contains copies of third-party code.
+exclude = ["build", "dist", "**/__pycache__", "**/.*"]
