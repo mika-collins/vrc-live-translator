@@ -1,149 +1,130 @@
 # VRChat Live Translator
 
-A free, lightweight desktop app that listens to the microphone, transcribes
-speech, translates it, and sends the result straight into the VRChat
-Chatbox.
+A free, lightweight Windows app that listens to a microphone, turns speech
+into text, translates it, and sends the result straight into the VRChat
+Chatbox, so other players can read it in their own language. It runs
+alongside VRChat and talks to it through VRChat's built-in OSC feature; it
+doesn't modify the game.
 
-## How it works
+> VRChat Live Translator is not affiliated with or endorsed by VRChat Inc.
 
-VRChat runs a small OSC (Open Sound Control) server in the background
-whenever OSC is enabled in its settings, listening on `127.0.0.1:9000`. This
-app is a completely separate program; it doesn't hook into VRChat directly.
-It just sends UDP packets to that address. If VRChat is running with OSC
-enabled, it picks them up and writes the text into the chatbox; if not, the
-packets are silently dropped (UDP has no delivery confirmation).
+## Download
 
-That means:
-- VRChat and this app are two independent programs. Launch order mostly
-  doesn't matter, but VRChat needs to be running with OSC enabled *before*
-  speaking, or the message won't go anywhere.
-- Closing this app doesn't affect VRChat, and vice versa.
+**[Download the latest release](https://github.com/mika-collins/vrc-live-translator/releases/latest)**
 
-## Stack
+Requirements:
+- Windows 10 or 11 (64-bit)
+- An internet connection (speech recognition and translation run online)
+- VRChat, with OSC enabled (see [Getting started](#getting-started))
 
-- **Python 3.11+**: primary language.
-- **Tkinter/ttk**: Python's built-in GUI toolkit; builds the app's window and controls.
-- **SpeechRecognition + Google Web Speech API**: converts captured microphone audio into text.
-- **MyMemory translation API**: translates the transcript between languages via MyMemory's free API, called directly with the Python standard library (anonymous tier capped around 5,000 words/day).
-- **python-osc**: an OSC client and server; sends the translated text to VRChat's Chatbox and receives avatar parameter changes back from it (for the avatar toggle).
-- **PyAudio**: gives SpeechRecognition access to the system microphone.
-- **pynput**: a global keyboard hook that toggles listening via the desktop hotkey, even when VRChat has focus.
+No Python or other software needs to be installed. Everything the app needs
+is included in the download.
 
-## Quick Setup
+### Install
 
-Open PowerShell in this project folder and run these commands once:
+1. On the release page, under **Assets**, download
+   `VRCTranslator-<version>-windows.zip`.
+2. Right-click the zip and choose **Extract All...**, then pick a place to
+   keep it.
+3. Open the extracted `VRCTranslator` folder and double-click
+   **`VRCTranslator.exe`**.
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
+Keep the `_internal` folder next to `VRCTranslator.exe`. The app needs the
+files inside it. Running the exe from inside the zip without extracting it
+first won't work.
 
-After installation, start the desktop window with:
+To uninstall, delete the `VRCTranslator` folder.
 
-```powershell
-python app.py
-```
+### "Windows protected your PC"
 
-Choose a microphone, select the source and target language, then click
-**Start listening**. Keep the PowerShell window open while the application
-is running. Close the GUI window to exit.
+The first time the app is opened, Windows SmartScreen may show a blue
+**"Windows protected your PC"** warning. It appears because the app isn't
+code-signed, which is common for free, open-source tools, and doesn't mean
+anything was found wrong with it. Click **More info**, then **Run anyway**.
+Windows remembers the choice.
 
-The virtual environment needs to be activated again in each new PowerShell
-window:
+Only download the app from this repository's
+[Releases page](https://github.com/mika-collins/vrc-live-translator/releases).
+Each release also includes a `.sha256` checksum file, which confirms the
+download wasn't changed. To check it, download both files into the same
+folder, open PowerShell in that folder, and run the command below with
+`<version>` replaced. It prints `True` when the zip matches:
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python app.py
+(Get-FileHash .\VRCTranslator-<version>-windows.zip).Hash -eq (Get-Content .\VRCTranslator-<version>-windows.zip.sha256).Split()[0]
 ```
 
-It can also be launched without activation by using the environment's Python
-directly:
+## Getting started
 
-```powershell
-.\.venv\Scripts\python.exe app.py
-```
+1. **Enable OSC in VRChat.** Open the Action Menu, then
+   **Options → OSC → Enabled**. This only needs to be done once.
+2. **Open VRChat Live Translator.**
+3. **Choose a microphone**, the spoken language (**Source language**) and
+   the language to translate to (**Target language**).
+4. Click **Send test message**. "VRC Live Translator test message" should
+   appear in the Chatbox above the avatar in VRChat. If it doesn't, see
+   [Troubleshooting](#troubleshooting).
+5. Click **Start listening** and speak. Each phrase is translated and posted
+   to the Chatbox after a pause in speech.
 
-## VRChat setup
+**Mute assist (transcribe only)** skips translation and sends speech as-is,
+which is useful for playing muted with speech typed out in the Chatbox.
 
-1. Launch VRChat.
-2. Open the Action Menu → **Options** → **OSC** → **Enabled**.
-3. Leave VRChat running. It now listens for OSC messages on `127.0.0.1:9000`.
+### Desktop and VR setup
 
-This app sends translated text to `/chatbox/input` with `True` as the second
-argument, which submits the message immediately rather than just typing it
-into the box.
+Clicking **Start listening** works at a desk, but the button can't be
+reached while VRChat has focus or while wearing a headset. There are two
+ways to start and stop listening from inside the game:
 
-## Hotkeys & VR control
+- **Desktop**: a keyboard shortcut (F9 by default) that works even while
+  VRChat is the active window. Best for desktop mode.
+- **VR**: a toggle in the avatar's Expression Menu, which controls the app
+  from a VR controller. Needed for headset play without a keyboard in reach.
+  This requires adding a parameter to the avatar in Unity.
 
-Clicking **Start listening** works fine at a desk, but it isn't reachable
-once VRChat has focus (and not while wearing a headset). Two ways
-to start/stop listening remotely, each in its own guide:
+Step-by-step desktop and VR guides are coming soon.
 
-- [Desktop hotkey setup](docs/desktop-hotkey.md) - a global keyboard
-  shortcut (default F9). Best for desktop play or testing without a headset.
-- [VRChat avatar toggle setup](docs/avatar-toggle-setup.md) - bind a toggle
-  in the avatar's Expression Menu, controllable from a VR controller alone.
-  Needed for headset/Quest play with no keyboard in reach; requires editing
-  the avatar in Unity.
+## Privacy
 
-## Current limitations
+To work, the app sends data to two free online services:
 
-- The free speech and translation web endpoints can rate-limit requests and
-  may change behavior without notice. Network errors are logged and do not
-  crash the GUI.
-- One Chatbox message is sent per recognized phrase, so rapid speech can
-  produce multiple back-to-back Chatbox submissions rather than one clean
-  message.
-- No delivery confirmation: if VRChat isn't listening, a send fails silently.
-- VRChat's Chatbox has a character limit (~144); this app truncates before
-  sending and logs when it does, so a truncated message won't be a silent
-  surprise, but it will still cut off mid-sentence.
+- **Recorded speech** is sent to Google's speech recognition service to be
+  turned into text.
+- **The recognized text** is sent to [MyMemory](https://mymemory.translated.net/)
+  to be translated.
 
-## Development
+Both connections are encrypted (HTTPS). The app only records while it is
+listening, and it doesn't save audio or text. Each service handles what it
+receives under its own terms, so avoid saying anything sensitive while the
+app is listening.
 
-All changes reach `main` through a pull request. Every pull request runs the
-checks in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+## Troubleshooting
 
-| Check | Tool | What it verifies |
-| --- | --- | --- |
-| Lint | [Ruff](https://docs.astral.sh/ruff/), [actionlint](https://github.com/rhysd/actionlint) | Code quality, formatting, and workflow file mistakes |
-| Install & compile | pip, `compileall` | Dependencies install and the app imports on Windows with Python 3.11 |
-| Type check | [Pyright](https://github.com/microsoft/pyright) | Type hints are consistent across the app and its libraries |
-| Security audit | [pip-audit](https://github.com/pypa/pip-audit) | No dependency has a known vulnerability |
+**Nothing shows up in the VRChat Chatbox**
+- Check that OSC is enabled in VRChat (**Options → OSC → Enabled**).
+- Use **Send test message**. If the test message doesn't arrive, the problem
+  is the connection to VRChat, not the microphone.
+- Another OSC app may already be using the same ports (9000/9001). Close
+  other OSC tools and try again.
 
-Install the development tools into the virtual environment (after the Quick
-Setup steps):
+**No microphones are listed, or nothing is heard**
+- Open Windows **Settings → Privacy & security → Microphone** and turn on
+  **Let desktop apps access your microphone**.
+- Check that the right microphone is selected and isn't muted in Windows.
 
-```powershell
-pip install -r requirements-dev.txt
-```
+**Translation stops working partway through the day**
+- The free MyMemory service allows about 5,000 words per day. The Activity
+  log shows a "quota exceeded" message when the limit is reached. It resets
+  daily.
 
-Run the same checks locally before pushing:
+**Antivirus software flagged the app**
+- The desktop hotkey uses a keyboard hook so that it works while VRChat has
+  focus. Some antivirus tools treat any keyboard hook in an unsigned app as
+  suspicious. The app only checks whether a pressed key is the chosen
+  hotkey; it doesn't record or send keystrokes.
 
-```powershell
-ruff check .
-ruff format --check .
-pyright
-pip-audit -r requirements.txt -r requirements-dev.txt
-actionlint
-```
+## Contributing
 
-`ruff check --fix .` and `ruff format .` fix most lint and formatting issues
-automatically.
-
-### Building the Windows executable
-
-The app is packaged with [PyInstaller](https://pyinstaller.org/) as a
-one-folder build, configured in
-[`VRCTranslator.spec`](VRCTranslator.spec):
-
-```powershell
-pip install -r requirements-build.txt
-pyinstaller --noconfirm VRCTranslator.spec
-```
-
-The output is `dist/VRCTranslator/`. Run
-`VRCTranslator.exe` inside it to test, or zip the whole folder to
-share it. The `_internal` folder must stay next to the `.exe`.
+Any feedback is welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for how the app works, how to run it from
+source, and how releases are built.
