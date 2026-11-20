@@ -92,6 +92,15 @@ jobs:
       - name: Pyright
         run: pyright
 
+  # Builds the executable the same way a release does, so a change or dependency
+  # update that breaks packaging fails here instead of at release time. The zip is
+  # attached to the run for reviewers to download and test.
+  package:
+    name: Package
+    uses: ./.github/workflows/build.yml
+    with:
+      retention-days: 7
+
   audit:
     name: Security audit
     # Windows so dependencies resolve the same way they do for users.
@@ -114,4 +123,5 @@ jobs:
           pip-audit
           -r requirements.txt
           -r requirements-dev.txt
+          -r requirements-build.txt
           --desc
