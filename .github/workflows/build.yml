@@ -52,7 +52,13 @@ jobs:
             "dist/VRCTranslator/_internal/assets/icons/live_translator.ico",
             "dist/VRCTranslator/_internal/assets/icons/vrchat_white_96.png",
             "dist/VRCTranslator/_internal/customtkinter/assets/themes",
-            "dist/VRCTranslator/_internal/speech_recognition/flac-win32.exe"
+            "dist/VRCTranslator/_internal/speech_recognition/flac-win32.exe",
+            "dist/VRCTranslator/_internal/pynput/__init__.py",
+            "dist/VRCTranslator/LICENSE.txt",
+            "dist/VRCTranslator/THIRD-PARTY-NOTICES.txt",
+            "dist/VRCTranslator/licenses/Python/LICENSE.txt",
+            "dist/VRCTranslator/licenses/SpeechRecognition/LICENSE-FLAC.txt",
+            "dist/VRCTranslator/licenses/pynput/COPYING.LGPL"
           )
           $missing = $required | Where-Object { -not (Test-Path $_) }
           if ($missing) {

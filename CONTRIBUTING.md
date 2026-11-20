@@ -42,6 +42,9 @@ VRChat, which is how the avatar toggle starts and stops listening.
 | [`hotkey.py`](hotkey.py) | Global desktop hotkey |
 | [`assets/icons/`](assets/icons/) | App icon and UI images |
 | [`VRCTranslator.spec`](VRCTranslator.spec) | PyInstaller build configuration |
+| [`LICENSE`](LICENSE) | The app's license (MIT) |
+| [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) | Credits and licenses for software bundled in the download |
+| [`licenses/`](licenses/) | License texts that bundled packages don't ship themselves |
 
 ### Built with
 
@@ -168,6 +171,39 @@ build doesn't pick up on its own:
 
 Changes that affect packaging should be tested by running the built exe, not
 just `python app.py`.
+
+### Licenses in the build
+
+The download has to include the licenses of the open-source software bundled
+in it. The spec handles this at the end of each build: it copies `LICENSE`
+and `THIRD-PARTY-NOTICES.md` next to the exe, and fills a `licenses/` folder
+with the license files of every package in `requirements.txt` and their
+dependencies, plus Python's own license.
+
+Some packages don't ship every license text they need, so the repo's
+[`licenses/`](licenses/) folder holds those, one subfolder per package (named
+after the package), and the build merges them in. For example, it adds the
+Roboto font's Apache license to CustomTkinter and PortAudio's license to
+PyAudio.
+
+When adding or removing a runtime dependency:
+
+- **Add it to [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)** with its
+  license and copyright line, or remove its entry.
+- **The build fails if a bundled package has no license file**, or if
+  `licenses/` has a folder for a package that's no longer bundled. Fix it by
+  adding the license text to `licenses/<package>/` (usually found in the
+  package's source repository), or by deleting the stale folder.
+- **Check whether the license is copyleft** (GPL, LGPL, MPL). These add
+  conditions to sharing the download, as the notes for pynput and FLAC in the
+  notices file show. Permissive licenses (MIT, BSD, Apache, PSF) only need
+  their notices included.
+
+SpeechRecognition bundles the FLAC encoder (currently 1.3.2), which is
+GPLv2, so [`release.yml`](.github/workflows/release.yml) attaches the
+matching FLAC source to every release. If a SpeechRecognition update changes
+the FLAC version, update `FLAC_VERSION` and `FLAC_SHA256` in `release.yml`
+and the version in `THIRD-PARTY-NOTICES.md`.
 
 ## Releasing
 
