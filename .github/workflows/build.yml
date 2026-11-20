@@ -1,0 +1,92 @@
+name: Build
+
+# Builds the Windows executable, checks the bundle, and uploads the zip and its
+# checksum as the "windows-build" artifact. Not run directly: ci.yml calls it on
+# every pull request and release.yml calls it when a version tag is pushed.
+on:
+  workflow_call:
+    inputs:
+      retention-days:
+        description: Days to keep the uploaded artifact
+        type: number
+        default: 90
+    outputs:
+      zip-name:
+        description: File name of the packaged zip
+        value: ${{ jobs.build.outputs.zip-name }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows executable
+    runs-on: windows-latest
+    timeout-minutes: 20
+    outputs:
+      zip-name: ${{ steps.package.outputs.zip-name }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-build.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Build with PyInstaller
+        run: pyinstaller --noconfirm VRCTranslator.spec
+
+      # Fail early if files that are loaded at runtime are missing. Add an entry here
+      # whenever the app starts depending on a new data file or runtime-loaded module.
+      - name: Check bundled files
+        shell: pwsh
+        run: |
+          $required = @(
+            "dist/VRCTranslator/VRCTranslator.exe",
+            "dist/VRCTranslator/_internal/assets/icons/live_translator.ico",
+            "dist/VRCTranslator/_internal/assets/icons/vrchat_white_96.png",
+            "dist/VRCTranslator/_internal/customtkinter/assets/themes",
+            "dist/VRCTranslator/_internal/speech_recognition/flac-win32.exe"
+          )
+          $missing = $required | Where-Object { -not (Test-Path $_) }
+          if ($missing) {
+            $missing | ForEach-Object { Write-Output "::error::Missing from build: $_" }
+            exit 1
+          }
+          $size = (Get-ChildItem dist/VRCTranslator -Recurse -File | Measure-Object Length -Sum).Sum / 1MB
+          Write-Output ("Build size: {0:N1} MB" -f $size)
+
+      - name: Package zip and checksum
+        id: package
+        shell: pwsh
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          # Tag builds are named after the tag (v1.2.3); other builds use the short commit hash.
+          if ($env:REF_TYPE -eq "tag") {
+            $version = $env:REF_NAME
+          } else {
+            $version = "dev-" + $env:SHA.Substring(0, 7)
+          }
+          $zip = "VRCTranslator-$version-windows.zip"
+          Compress-Archive -Path dist/VRCTranslator -DestinationPath $zip
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  $zip" | Out-File -Encoding ascii "$zip.sha256"
+          "zip-name=$zip" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-build
+          path: |
+            ${{ steps.package.outputs.zip-name }}
+            ${{ steps.package.outputs.zip-name }}.sha256
+          if-no-files-found: error
+          retention-days: ${{ inputs.retention-days }}
