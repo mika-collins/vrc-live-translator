@@ -374,7 +374,7 @@ class LiveTranslatorApp:
     def _send_test_message(self) -> None:
         """Send a fixed string straight to VRChat, bypassing mic and translation."""
         self._queue_log("Sending OSC test message...")
-        self._send_to_vrchat("VRC Live Translator test message")
+        self._send_to_vrchat("Live Translator for VRChat test message")
 
     def _start_hotkey_listener(self) -> None:
         """Start the global keyboard hook that works even when VRChat has focus."""
