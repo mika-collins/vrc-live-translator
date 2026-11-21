@@ -4,3 +4,6 @@ __pycache__/
 .env
 build/
 dist/
+
+# Local-only tools for rendering the README trailer
+tools/demo/
