@@ -6,6 +6,8 @@ Chatbox, so other players can read it in their own language. It runs
 alongside VRChat and talks to it through VRChat's built-in OSC feature; it
 doesn't modify the game.
 
+https://github.com/user-attachments/assets/ed8dcdd3-74d2-40c1-9b95-cd27cc8458b0
+
 > Live Translator for VRChat is an unofficial, fan-made project. It is not
 > affiliated with or endorsed by VRChat Inc.
 
