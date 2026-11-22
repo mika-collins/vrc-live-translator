@@ -1,5 +1,5 @@
 SpeechRecognition==3.17.0
-python-osc==1.10.2
+python-osc==1.10.3
 PyAudio==0.2.14
 pynput==1.8.2
 customtkinter==6.0.0
